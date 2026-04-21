@@ -2,80 +2,63 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公共文件上传与下载中心</title>
+    <title>公开文件共享站</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:微软雅黑;background:#f0f4f8;padding:40px;max-width:900px;margin:0 auto;}
-        .box{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 12px #0002;}
-        h1{text-align:center;color:#222;margin-bottom:30px;}
-        .upload-area{border:2px dashed #2563eb;border-radius:8px;padding:40px;text-align:center;margin-bottom:30px;}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑;}
+        body{background:#f0f4f8;padding:30px;max-width:800px;margin:0 auto;}
+        .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 15px #00000015;}
+        h1{text-align:center;margin-bottom:30px;color:#222;}
+        .upload{border:2px dashed #2563eb;padding:40px;text-align:center;border-radius:8px;margin-bottom:30px;}
         button{background:#2563eb;color:white;border:none;padding:12px 30px;border-radius:6px;font-size:16px;cursor:pointer;margin-top:15px;}
         button:hover{background:#1d4ed8;}
-        #fileList{margin-top:30px;}
-        .file-item{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
-        a{color:#2563eb;text-decoration:none;}
+        .file-item{padding:12px 15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
+        a{color:#2563eb;text-decoration:none;font-weight:500;}
     </style>
 </head>
 <body>
-<div class="box">
+<div class="card">
     <h1>📂 公共文件共享平台</h1>
 
-    <div class="upload-area">
+    <div class="upload">
         <input type="file" id="fileInput" multiple>
         <br>
-        <button onclick="uploadFile()">一键上传并保存</button>
+        <button onclick="upload()">上传并公开分享</button>
     </div>
 
-    <h3>已上传公开文件（所有人可下载）</h3>
+    <h3>📁 所有人可下载的公开文件</h3>
     <div id="fileList"></div>
 </div>
 
 <script>
-// 改成你的GitHub用户名和仓库名
-const USERNAME = "lij172";
-const REPO_NAME = "lij172.github.io";
+// 你的信息，已经帮你填好
+const userName = "lij172";
+const repoName = "lij172.github.io";
 
-async function uploadFile(){
-    const file = fileInput.files[0];
-    if(!file){alert("请先选择文件");return;}
-
-    const fileName = Date.now() + "_" + file.name;
-    const reader = new FileReader();
-
-    reader.onload = async ()=>{
-        const base64 = reader.result.split(',')[1];
-
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${REPO_NAME}/contents/${fileName}`,{
-            method:"PUT",
-            headers:{
-                "Accept":"application/vnd.github.v3+json",
-                "Authorization":"token 这里填你刚才复制的令牌"
-            },
-            body:JSON.stringify({
-                message:`上传新文件:${fileName}`,
-                content:base64
-            })
+// 页面加载自动拉取已有的公开文件
+window.onload = async ()=>{
+    const res = await fetch(`https://api.github.com/repos/${userName}/${repoName}/contents/`);
+    const data = await res.json();
+    if(Array.isArray(data)){
+        data.forEach(f=>{
+            if(f.name !== "index.html"){
+                addFile(f.name, f.download_url);
+            }
         })
-
-        if(res.ok){
-            alert("✅ 上传成功！文件永久保存，所有人可下载");
-            const downloadUrl = `https://${USERNAME}.github.io/${fileName}`;
-            addFileItem(fileName, downloadUrl);
-        }else{
-            alert("❌ 上传失败，请检查令牌是否填写正确");
-        }
     }
-    reader.readAsDataURL(file);
 }
 
-// 页面展示下载列表
-function addFileItem(name, url){
-    const html = `<div class="file-item">
+// 简易手动上传逻辑（仅你自己可用，访客只读下载，彻底规避安全告警）
+function upload(){
+    alert("普通访客直接下载下方文件即可\n\n如果你本人要上传新文件：\n1. 去仓库点【添加文件】→上传文件\n2. 文件会自动出现在下方列表，所有人立刻可见");
+}
+
+// 渲染下载列表
+function addFile(name, url){
+    fileList.innerHTML += `
+    <div class="file-item">
         <span>${name}</span>
-        <a href="${url}" target="_blank">立即下载/查看</a>
-    </div>`;
-    fileList.innerHTML += html;
+        <a href="${url}" target="_blank">一键下载/查看</a>
+    </div>`
 }
 </script>
 </body>
